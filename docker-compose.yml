@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   flask_api:
     build: ./python-api
@@ -7,6 +9,11 @@ services:
     volumes:
       - ./python-api:/app
     command: "python app.py"
+    networks:
+      - app-network
+    depends_on:
+      - mysql_db
+
   mysql_db:
     image: mysql:latest
     container_name: mysql_db
@@ -18,8 +25,22 @@ services:
       MYSQL_PASSWORD: password
     ports:
       - "3306:3306"
+    networks:
+      - app-network
+
+  node_api:
+    build: ./node-api
+    container_name: node_api
+    ports:
+      - "3000:3000"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./node-api:/usr/src/app
+    environment:
+      FLASK_API_URL: "http://flask_api:5000"
+    networks:
+      - app-network
+    depends_on:
+      - flask_api
 
 networks:
   app-network:
